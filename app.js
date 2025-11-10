@@ -59,15 +59,18 @@ const buildVehicleTypesSelectSql = (id, variant) => {
     return sql;
 }
 
-const buildCustomersSelectSql = (id, variant) => {
+const buildUsersSelectSql = (id, variant) => {
     let sql = '';
-    const table = 'customers';
-    const fields = ['c_id', 'c_f_name', 'c_l_name', 'c_gender', 'c_dob', 'c_address', 'c_city', 'c_postcode', 'c_email', 'c_phone'];
+    const table = '((users LEFT JOIN userTypes on users.u_ut_userTypeId = userTypes.ut_id))';
+    const fields = ['u_id', 'u_f_name', 'u_l_name', 'u_gender', 'u_dob', 'u_address', 'u_city', 'u_postcode', 'u_email', 'u_phone', 'u_ut_userTypeId'];
 
     switch (variant) {
+        case 'types':
+            sql = `SELECT ${fields} FROM ${table} WHERE users.u_ut_userTypeId=${id}`;
+            break;
         default:
             sql = `SELECT ${fields} FROM ${table}`;
-            if (id) sql += ` WHERE c_id=${id}`;
+            if (id) sql += ` WHERE u_id=${id}`;
     }
     return sql;
 }
@@ -103,14 +106,14 @@ const getVehicleTypesController = async (req, res) => {
     res.status(200).json(result);
 }
 
-const getCustomersController = async (req, res) => {
+const getUsersController = async (req, res) => {
     const id = req.params.id; // Undefined in the case of the /api/vehicles endpoint
 
     //Validate request
 
 
     // Access data
-    const sql = buildCustomersSelectSql(id, null);
+    const sql = buildUsersSelectSql(id, null);
     const { isSuccess, result, message } = await read(sql);
     if (!isSuccess) return res.status(404).json({ message });
     // Responses
@@ -129,8 +132,8 @@ app.get('/api/vcharter/vehicletypes', (req, res) => getVehicleTypesController(re
 app.get('/api/vcharter/vehicletypes/:id', (req, res) => getVehicleTypesController(req, res, null));
 
 // Customers
-app.get('/api/vcharter/customers', (req, res) => getCustomersController(req, res, null));
-app.get('/api/vcharter/customers/:id', (req, res) => getCustomersController(req, res, null));
+app.get('/api/vcharter/users', (req, res) => getUsersController(req, res, null));
+app.get('/api/vcharter/users/:id', (req, res) => getUsersController(req, res, null));
 
 // Start server --------------------------------
 const PORT = process.env.PORT || 5000;
