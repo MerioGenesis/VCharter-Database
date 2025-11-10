@@ -75,11 +75,7 @@ const buildUsersSelectSql = (id, variant) => {
     return sql;
 }
 
-const getVehiclesController = async (req, res, variant) => {
-    const id = req.params.id; // Undefined in the case of the /api/vehicles endpoint
-
-
-
+const getVehiclesController = async (res, id, variant) => {
     //Validate request
 
 
@@ -91,29 +87,23 @@ const getVehiclesController = async (req, res, variant) => {
     res.status(200).json(result);
 }
 
-const getVehicleTypesController = async (req, res) => {
-    const id = req.params.id;
-
-
+const getVehicleTypesController = async (res, id, variant) => {
     //Validate request
 
 
     //Access data
-    const sql = buildVehicleTypesSelectSql(id, null);
+    const sql = buildVehicleTypesSelectSql(id, variant);
     const { isSuccess, result, message } = await read(sql);
     if (!isSuccess) return res.status(404).json({ message });
     // Responses
     res.status(200).json(result);
 }
 
-const getUsersController = async (req, res) => {
-    const id = req.params.id; // Undefined in the case of the /api/vehicles endpoint
-
+const getUsersController = async (res, id, variant) => {
     //Validate request
 
-
     // Access data
-    const sql = buildUsersSelectSql(id, null);
+    const sql = buildUsersSelectSql(id, variant);
     const { isSuccess, result, message } = await read(sql);
     if (!isSuccess) return res.status(404).json({ message });
     // Responses
@@ -123,17 +113,17 @@ const getUsersController = async (req, res) => {
 // Endpoints -----------------------------------
 
 // Vehicles
-app.get('/api/vcharter/vehicles', (req, res) => getVehiclesController(req, res, null));
-app.get('/api/vcharter/vehicles/:id', (req, res) => getVehiclesController(req, res, null))
-app.get('/api/vcharter/vehicles/types/:id', (req, res) => getVehiclesController(req, res, 'types'));
+app.get('/api/vcharter/vehicles', (req, res) => getVehiclesController(res, null, null));
+app.get('/api/vcharter/vehicles/:id(\\d+)', (req, res) => getVehiclesController(res, req.params.id))
+app.get('/api/vcharter/vehicles/types/:id', (req, res) => getVehiclesController(res, req.params.id, 'types'));
 
 // Vehicle Types
-app.get('/api/vcharter/vehicletypes', (req, res) => getVehicleTypesController(req, res, null));
-app.get('/api/vcharter/vehicletypes/:id', (req, res) => getVehicleTypesController(req, res, null));
+app.get('/api/vcharter/vehicletypes', (req, res) => getVehicleTypesController(res, null, null));
+app.get('/api/vcharter/vehicletypes/:id(\\d+)', (req, res) => getVehicleTypesController(req, req.params.id, null));
 
-// Customers
-app.get('/api/vcharter/users', (req, res) => getUsersController(req, res, null));
-app.get('/api/vcharter/users/:id', (req, res) => getUsersController(req, res, null));
+// Users
+app.get('/api/vcharter/users', (req, res) => getUsersController(res, null, null));
+app.get('/api/vcharter/users/:id(\\d+)', (req, res) => getUsersController(res, req.params.id, null));
 
 // Start server --------------------------------
 const PORT = process.env.PORT || 5000;
