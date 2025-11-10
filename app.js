@@ -114,16 +114,16 @@ const getUsersController = async (res, id, variant) => {
 
 // Vehicles
 app.get('/api/vcharter/vehicles', (req, res) => getVehiclesController(res, null, null));
-app.get('/api/vcharter/vehicles/:id(\\d+)', (req, res) => getVehiclesController(res, req.params.id))
+app.get('/api/vcharter/vehicles/:id', (req, res) => getVehiclesController(res, req.params.id))
 app.get('/api/vcharter/vehicles/types/:id', (req, res) => getVehiclesController(res, req.params.id, 'types'));
 
 // Vehicle Types
 app.get('/api/vcharter/vehicletypes', (req, res) => getVehicleTypesController(res, null, null));
-app.get('/api/vcharter/vehicletypes/:id(\\d+)', (req, res) => getVehicleTypesController(req, req.params.id, null));
+app.get('/api/vcharter/vehicletypes/:id', (req, res) => getVehicleTypesController(req, req.params.id, null));
 
 // Users
 app.get('/api/vcharter/users', (req, res) => getUsersController(res, null, null));
-app.get('/api/vcharter/users/:id(\\d+)', (req, res) => getUsersController(res, req.params.id, null));
+app.get('/api/vcharter/users/:id', (req, res) => getUsersController(res, req.params.id, null));
 
 // Start server --------------------------------
 const PORT = process.env.PORT || 5000;
