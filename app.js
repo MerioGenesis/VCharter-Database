@@ -16,7 +16,27 @@ app.use(function (req, res, next) {
 });
 app.use(cors({ origin: '*' }));
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Controllers ---------------------------------
+
+const createVehicle = async (sql, record) => {
+    try {
+        const status = await database.query(sql, record);
+
+        const recoverRecordSql = buildVehiclesSelectSql(status[0].insertId, null);
+        const { isSuccess, result, message } = await read(recoverRecordSql)
+
+
+        return isSuccess
+            ? { isSuccess: true, result: result, message: `Record successfully recovered` }
+            : { isSuccess: false, result: null, message: `Failed to recover the inserted record: ${message}` };
+
+    } catch (error) {
+        return { isSuccess: false, result: null, message: `Failed to execute query: ${error.message}` };
+    }
+}
 
 const read = async (selectSql) => {
     try {
@@ -45,6 +65,16 @@ const buildVehiclesSelectSql = (id, variant) => {
     }
     return sql;
 }
+
+const buildSetFields = (fields) => fields.reduce((setSql, field, index) =>
+    setSql + `${field}=:${field}` + ((index === fields.length - 1) ? '' : ','), 'SET ');
+
+
+const buildVehiclesInsertSql = (record) => {
+    const table = 'vehicles';
+    const fields = ['v_name', 'v_brand', 'v_seatsNo', 'v_year', 'v_plate', 'v_imageURL', 'v_vt_id'];
+    return `INSERT INTO ${table} ` + buildSetFields(fields);
+};
 
 const buildVehicleTypesSelectSql = (id, variant) => {
     let sql = '';
@@ -87,6 +117,18 @@ const getVehiclesController = async (res, id, variant) => {
     res.status(200).json(result);
 }
 
+const postVehicleController = async (req, res) => {
+    //Validate request
+
+
+    //Access data
+    const sql = buildVehiclesInsertSql(req.body);
+    const { isSuccess, result, message } = await createVehicle(sql, req.body);
+    if (!isSuccess) return res.status(404).json({ message });
+    // Responses
+    res.status(201).json(result);
+}
+
 const getVehicleTypesController = async (res, id, variant) => {
     //Validate request
 
@@ -98,6 +140,9 @@ const getVehicleTypesController = async (res, id, variant) => {
     // Responses
     res.status(200).json(result);
 }
+
+
+
 
 const getUsersController = async (res, id, variant) => {
     //Validate request
@@ -120,6 +165,8 @@ app.get('/api/vcharter/vehicles/types/:id', (req, res) => getVehiclesController(
 // Vehicle Types
 app.get('/api/vcharter/vehicletypes', (req, res) => getVehicleTypesController(res, null, null));
 app.get('/api/vcharter/vehicletypes/:id', (req, res) => getVehicleTypesController(req, req.params.id, null));
+
+app.post('/api/vcharter/vehicles', postVehicleController);
 
 // Users
 app.get('/api/vcharter/users', (req, res) => getUsersController(res, null, null));
