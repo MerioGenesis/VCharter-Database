@@ -105,6 +105,21 @@ const buildUsersSelectSql = (id, variant) => {
     return sql;
 }
 
+const buildUserTypesSelectSql = (id, variant) => {
+    let sql = '';
+    const table = '(userTypes)';
+    const fields = ['ut_id', 'ut_typeName'];
+
+    switch (variant) {
+        default:
+            sql = `SELECT ${fields} FROM ${table}`;
+            if (id) sql += ` WHERE ut_id=${id}`;
+    }
+    return sql;
+}
+
+
+
 const getVehiclesController = async (res, id, variant) => {
     //Validate request
 
@@ -155,6 +170,17 @@ const getUsersController = async (res, id, variant) => {
     res.status(200).json(result);
 }
 
+const getUserTypesController = async (res, id, variant) => {
+    //Validate request
+
+    // Access data
+    const sql = buildUserTypesSelectSql(id, variant);
+    const { isSuccess, result, message } = await read(sql);
+    if (!isSuccess) return res.status(404).json({ message });
+    // Responses
+    res.status(200).json(result);
+}
+
 // Endpoints -----------------------------------
 
 // Vehicles
@@ -171,6 +197,11 @@ app.post('/api/vcharter/vehicles', postVehicleController);
 // Users
 app.get('/api/vcharter/users', (req, res) => getUsersController(res, null, null));
 app.get('/api/vcharter/users/:id', (req, res) => getUsersController(res, req.params.id, null));
+app.get('/api/vcharter/users/types/:id', (req, res) => getUsersController(res, req.params.id, 'types'));
+
+// UserTypes
+app.get('/api/vcharter/usertypes', (req, res) => getUserTypesController(res, null, null));
+app.get('/api/vcharter/usertypes/:id', (req, res) => getUserTypesController(res, req.params.id, null));
 
 // Start server --------------------------------
 const PORT = process.env.PORT || 5000;
