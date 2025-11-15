@@ -157,8 +157,6 @@ const getVehicleTypesController = async (res, id, variant) => {
 }
 
 
-
-
 const getUsersController = async (res, id, variant) => {
     //Validate request
 
