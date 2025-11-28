@@ -182,24 +182,24 @@ const getUserTypesController = async (res, id, variant) => {
 // Endpoints -----------------------------------
 
 // Vehicles
-app.get('/api/vcharter/vehicles', (req, res) => getVehiclesController(res, null, null));
-app.get('/api/vcharter/vehicles/:id', (req, res) => getVehiclesController(res, req.params.id))
-app.get('/api/vcharter/vehicles/types/:id', (req, res) => getVehiclesController(res, req.params.id, 'types'));
+app.get('/api/vcharter/vehicles', (req, res) => getVehiclesController(req, res, null));
+app.get('/api/vcharter/vehicles/:id', (req, res) => getVehiclesController(req.params.id, res))
+app.get('/api/vcharter/vehicles/types/:id', (req, res) => getVehiclesController(req.params.id, res, 'types'));
 
 // Vehicle Types
-app.get('/api/vcharter/vehicletypes', (req, res) => getVehicleTypesController(res, null, null));
-app.get('/api/vcharter/vehicletypes/:id', (req, res) => getVehicleTypesController(req, req.params.id, null));
+app.get('/api/vcharter/vehicletypes', (req, res) => getVehicleTypesController(req, res, null));
+app.get('/api/vcharter/vehicletypes/:id', (req, res) => getVehicleTypesController(req.params.id, res, null));
 
 app.post('/api/vcharter/vehicles', postVehicleController);
 
 // Users
-app.get('/api/vcharter/users', (req, res) => getUsersController(res, null, null));
-app.get('/api/vcharter/users/:id', (req, res) => getUsersController(res, req.params.id, null));
-app.get('/api/vcharter/users/types/:id', (req, res) => getUsersController(res, req.params.id, 'types'));
+app.get('/api/vcharter/users', (req, res) => getUsersController(req, res, null));
+app.get('/api/vcharter/users/:id', (req, res) => getUsersController(req.params.id, res, null));
+app.get('/api/vcharter/users/types/:id', (req, res) => getUsersController(req.params.id, res, 'types'));
 
 // UserTypes
-app.get('/api/vcharter/usertypes', (req, res) => getUserTypesController(res, null, null));
-app.get('/api/vcharter/usertypes/:id', (req, res) => getUserTypesController(res, req.params.id, null));
+app.get('/api/vcharter/usertypes', (req, res) => getUserTypesController(req, res, null));
+app.get('/api/vcharter/usertypes/:id', (req, res) => getUserTypesController(req.params.id, res, null));
 
 // Start server --------------------------------
 const PORT = process.env.PORT || 5000;
