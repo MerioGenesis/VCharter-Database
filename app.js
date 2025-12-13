@@ -21,6 +21,37 @@ app.use(express.urlencoded({ extended: true }));
 
 // Controllers ---------------------------------
 
+const updateVehicle = async (sql, id, record) => {
+    try {
+        const status = await database.query(sql, { ...record, v_id: id });
+
+        if (status[0].affectedRows === 0) return { isSuccess: false, result: null, message: `Failed to update record: no rows affected` };
+
+        const recoverRecordSql = buildVehiclesSelectSql(id, null);
+        const { isSuccess, result, message } = await read(recoverRecordSql)
+
+        return isSuccess
+            ? { isSuccess: true, result: result, message: `Record successfully recovered` }
+            : { isSuccess: false, result: null, message: `Failed to recover the updated record: ${message}` };
+
+    } catch (error) {
+        return { isSuccess: false, result: null, message: `Failed to execute query: ${error.message}` };
+    }
+}
+
+const deleteVehicles = async (sql, id) => {
+    try {
+        const status = await database.query(sql, { v_id: id });
+
+        return status[0].affectedRows === 0
+            ? { isSuccess: false, result: null, message: `Failed to delete record: ${id}` }
+            : { isSuccess: true, null: result, message: `Record successfully removed` };
+
+    } catch (error) {
+        return { isSuccess: false, result: null, message: `Failed to execute query: ${error.message}` };
+    }
+}
+
 const createVehicle = async (sql, record) => {
     try {
         const status = await database.query(sql, record);
@@ -70,10 +101,21 @@ const buildSetFields = (fields) => fields.reduce((setSql, field, index) =>
     setSql + `${field}=:${field}` + ((index === fields.length - 1) ? '' : ','), 'SET ');
 
 
-const buildVehiclesInsertSql = (record) => {
+const buildVehiclesInsertSql = () => {
     const table = 'vehicles';
     const fields = ['v_name', 'v_brand', 'v_seatsNo', 'v_year', 'v_plate', 'v_imageURL', 'v_vt_id'];
     return `INSERT INTO ${table} ` + buildSetFields(fields);
+};
+
+const buildVehiclesUpdateSql = () => {
+    const table = 'vehicles';
+    const fields = ['v_name', 'v_brand', 'v_seatsNo', 'v_year', 'v_plate', 'v_imageURL', 'v_vt_id'];
+    return `UPDATE ${table} ` + buildSetFields(fields) + ` WHERE v_id=:v_id`;
+};
+
+const buildVehiclesDeleteSql = () => {
+    const table = 'vehicles';
+    return `DELETE FROM ${table} WHERE v_id=:v_id`;
 };
 
 const buildVehicleTypesSelectSql = (id, variant) => {
@@ -132,17 +174,45 @@ const getVehiclesController = async (res, id, variant) => {
     res.status(200).json(result);
 }
 
-const postVehicleController = async (req, res) => {
+const postVehiclesController = async (req, res) => {
     //Validate request
 
 
     //Access data
-    const sql = buildVehiclesInsertSql(req.body);
+    const sql = buildVehiclesInsertSql();
     const { isSuccess, result, message } = await createVehicle(sql, req.body);
     if (!isSuccess) return res.status(404).json({ message });
     // Responses
     res.status(201).json(result);
 }
+
+const putVehiclesController = async (req, res) => {
+    //Validate request
+    const id = req.params.id;
+    const record = req.body;
+
+    //Access data
+    const sql = buildVehiclesUpdateSql();
+    const { isSuccess, result, message: accessorMessage } = await updateVehicle(sql, id, record);
+    if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+
+    // Responses
+    res.status(200).json(result);
+}
+
+const deleteVehiclesController = async (req, res) => {
+    //Validate request
+    const id = req.params.id;
+
+    //Access data
+    const sql = buildVehiclesDeleteSql();
+    const { isSuccess, result, message: accessorMessage } = await deleteVehicles(sql, id);
+    if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+
+    // Responses
+    res.status(200).json(result);
+}
+
 
 const getVehicleTypesController = async (res, id, variant) => {
     //Validate request
@@ -190,7 +260,9 @@ app.get('/api/vcharter/vehicles/types/:id', (req, res) => getVehiclesController(
 app.get('/api/vcharter/vehicletypes', (req, res) => getVehicleTypesController(res, null, null));
 app.get('/api/vcharter/vehicletypes/:id', (req, res) => getVehicleTypesController(req, req.params.id, null));
 
-app.post('/api/vcharter/vehicles', postVehicleController);
+app.post('/api/vcharter/vehicles', postVehiclesController);
+app.put('/api/vcharter/vehicles/:id', putVehiclesController);
+app.delete('/api/vcharter/vehicles/:id', deleteVehiclesController);
 
 // Users
 app.get('/api/vcharter/users', (req, res) => getUsersController(res, null, null));
