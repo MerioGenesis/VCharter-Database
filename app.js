@@ -118,11 +118,8 @@ const buildUserTypesSelectSql = (id, variant) => {
     return sql;
 }
 
-
-
 const getVehiclesController = async (res, id, variant) => {
     //Validate request
-
 
     // Access data
     const sql = buildVehiclesSelectSql(id, variant);
@@ -135,7 +132,6 @@ const getVehiclesController = async (res, id, variant) => {
 const postVehicleController = async (req, res) => {
     //Validate request
 
-
     //Access data
     const sql = buildVehiclesInsertSql(req.body);
     const { isSuccess, result, message } = await createVehicle(sql, req.body);
@@ -147,7 +143,6 @@ const postVehicleController = async (req, res) => {
 const getVehicleTypesController = async (res, id, variant) => {
     //Validate request
 
-
     //Access data
     const sql = buildVehicleTypesSelectSql(id, variant);
     const { isSuccess, result, message } = await read(sql);
@@ -155,7 +150,6 @@ const getVehicleTypesController = async (res, id, variant) => {
     // Responses
     res.status(200).json(result);
 }
-
 
 const getUsersController = async (res, id, variant) => {
     //Validate request
