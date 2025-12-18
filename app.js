@@ -21,31 +21,12 @@ app.use(express.urlencoded({ extended: true }));
 
 // Controllers ---------------------------------
 
-const updateVehicle = async (sql, id, record) => {
+const read = async (sql) => {
     try {
-        const status = await database.query(sql, { ...record, v_id: id });
-
-        if (status[0].affectedRows === 0) return { isSuccess: false, result: null, message: `Failed to update record: no rows affected` };
-
-        const recoverRecordSql = buildVehiclesSelectSql(id, null);
-        const { isSuccess, result, message } = await read(recoverRecordSql)
-
-        return isSuccess
-            ? { isSuccess: true, result: result, message: `Record successfully recovered` }
-            : { isSuccess: false, result: null, message: `Failed to recover the updated record: ${message}` };
-
-    } catch (error) {
-        return { isSuccess: false, result: null, message: `Failed to execute query: ${error.message}` };
-    }
-}
-
-const deleteVehicles = async (sql, id) => {
-    try {
-        const status = await database.query(sql, { v_id: id });
-
-        return status[0].affectedRows === 0
-            ? { isSuccess: false, result: null, message: `Failed to delete record: ${id}` }
-            : { isSuccess: true, null: result, message: `Record successfully removed` };
+        const [result] = await database.query(sql);
+        return (result.length === 0)
+            ? { isSuccess: false, result: null, message: 'No record(s) found' }
+            : { isSuccess: true, result: result, message: `${result.length} record(s) found` };
 
     } catch (error) {
         return { isSuccess: false, result: null, message: `Failed to execute query: ${error.message}` };
@@ -69,12 +50,33 @@ const createVehicle = async (sql, record) => {
     }
 }
 
-const read = async (selectSql) => {
+const updateVehicle = async (sql, id, record) => {
     try {
-        const [result] = await database.query(selectSql);
-        return (result.length === 0)
-            ? { isSuccess: false, result: null, message: 'No record(s) found' }
-            : { isSuccess: true, result: result, message: `${result.length} record(s) found` };
+        const status = await database.query(sql, { ...record, v_id: id });
+
+        if (status[0].affectedRows === 0)
+            return { isSuccess: false, result: null, message: `Failed to update record: no rows affected` };
+
+        const recoverRecordSql = buildVehiclesSelectSql(id, null);
+
+        const { isSuccess, result, message } = await read(recoverRecordSql)
+
+        return isSuccess
+            ? { isSuccess: true, result: result, message: `Record successfully recovered` }
+            : { isSuccess: false, result: null, message: `Failed to recover the updated record: ${message}` };
+
+    } catch (error) {
+        return { isSuccess: false, result: null, message: `Failed to execute query: ${error.message}` };
+    }
+}
+
+const deleteVehicles = async (sql, id) => {
+    try {
+        const status = await database.query(sql, { v_id: id });
+
+        return status[0].affectedRows === 0
+            ? { isSuccess: false, result: null, message: `Failed to delete record: ${id}` }
+            : { isSuccess: true, null: result, message: `Record successfully removed` };
 
     } catch (error) {
         return { isSuccess: false, result: null, message: `Failed to execute query: ${error.message}` };
@@ -160,11 +162,8 @@ const buildUserTypesSelectSql = (id, variant) => {
     return sql;
 }
 
-
-
 const getVehiclesController = async (res, id, variant) => {
     //Validate request
-
 
     // Access data
     const sql = buildVehiclesSelectSql(id, variant);
@@ -177,11 +176,10 @@ const getVehiclesController = async (res, id, variant) => {
 const postVehiclesController = async (req, res) => {
     //Validate request
 
-
     //Access data
     const sql = buildVehiclesInsertSql();
-    const { isSuccess, result, message } = await createVehicle(sql, req.body);
-    if (!isSuccess) return res.status(404).json({ message });
+    const { isSuccess, result, message: accessorMessage } = await createVehicle(sql, req.body);
+    if (!isSuccess) return res.status(400).json({ message: accessorMessage });
     // Responses
     res.status(201).json(result);
 }
@@ -194,7 +192,7 @@ const putVehiclesController = async (req, res) => {
     //Access data
     const sql = buildVehiclesUpdateSql();
     const { isSuccess, result, message: accessorMessage } = await updateVehicle(sql, id, record);
-    if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+    if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
     // Responses
     res.status(200).json(result);
@@ -207,16 +205,14 @@ const deleteVehiclesController = async (req, res) => {
     //Access data
     const sql = buildVehiclesDeleteSql();
     const { isSuccess, result, message: accessorMessage } = await deleteVehicles(sql, id);
-    if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+    if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
     // Responses
     res.status(200).json(result);
 }
 
-
 const getVehicleTypesController = async (res, id, variant) => {
     //Validate request
-
 
     //Access data
     const sql = buildVehicleTypesSelectSql(id, variant);
@@ -225,7 +221,6 @@ const getVehicleTypesController = async (res, id, variant) => {
     // Responses
     res.status(200).json(result);
 }
-
 
 const getUsersController = async (res, id, variant) => {
     //Validate request
@@ -258,7 +253,7 @@ app.get('/api/vcharter/vehicles/types/:id', (req, res) => getVehiclesController(
 
 // Vehicle Types
 app.get('/api/vcharter/vehicletypes', (req, res) => getVehicleTypesController(res, null, null));
-app.get('/api/vcharter/vehicletypes/:id', (req, res) => getVehicleTypesController(req, req.params.id, null));
+app.get('/api/vcharter/vehicletypes/:id', (req, res) => getVehicleTypesController(res, req.params.id, null));
 
 app.post('/api/vcharter/vehicles', postVehiclesController);
 app.put('/api/vcharter/vehicles/:id', putVehiclesController);
